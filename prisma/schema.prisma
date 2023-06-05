@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  firebaseId  String       @unique
+  username    String
+  city        String
+  phone       String       @unique
+  email       String?      @unique
+  friends     Friendship[]
+  asks        Ask[]
+  lists       List[] // NOT USED YET
+  suggestions Suggestion[]
+  photo       Photo[] // change to be ONE
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model Place {
+  id          String       @id @default(cuid())
+  name        String
+  description String
+  googleLink  String
+  address     String
+  city        String /// to filter by city
+  typeId      String
+  type        Type         @relation(fields: [typeId], references: [id])
+  suggestions Suggestion[]
+  photos      Photo[]
+  lists       List[] // NOT USED YET
+}
+
+model Type {
+  id          String       @id @default(cuid())
+  name        String
+  places      Place[]
+  lists       List[]
+  // asks        Ask[]
+  suggestions Suggestion[]
+  // color          String // this needs to be saved in the code base??
+  // photo          Photo? // this needs to just be saved somewhere in the code base ... type corresponds to this picture
+}
+
+// enum Type {
+//   RESTAURANT
+//   BAR
+//   NIGHTCLUB
+// }
+
+model Ask {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  question    String
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  suggestions Suggestion[] // optional - will be empty when question is asked
+  // types       Type[] // needs to be mandatory ... what kind of asks do you want?
+  // photo       Photo? /// optional photo for the ask??
+}
+
+model Photo {
+  id       String  @id @default(cuid())
+  location String /// S3 storage bucket link
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id])
+  // askId    String? @unique
+  // ask      Ask?    @relation(fields: [askId], references: [id])
+  placeId  String?
+  place    Place?  @relation(fields: [placeId], references: [id])
+}
+
+model List {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  userId    String
+  private   Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  // type      Type[] 
+  places    Place[] // optional ... can create an empty list
+} // NOTE: NOT BEING USED YET
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  typeId    String
+  type      Type     @relation(fields: [typeId], references: [id])
+  placeId   String
+  place     Place    @relation(fields: [placeId], references: [id])
+  asks      Ask[] // optional
+  comment   String
+}
+
+// must edit which fields are required or not!
